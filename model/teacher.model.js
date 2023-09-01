@@ -21,4 +21,9 @@ teacherSchema.pre("save", async function(){
     this.password=await bcryptjs.hash(this.password,salt)
 })
 
+teacherSchema.methods.comparePass=async function(password){
+    let hashedPass=await bcryptjs.compare(password, this.password)
+    return hashedPass
+}
+
 module.exports=new model("teacher", teacherSchema)

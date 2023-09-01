@@ -1,5 +1,7 @@
 const { invitationMail } = require("../helpers/mailhelper")
 const Teacher=require("../model/teacher.model")
+const jwt=require("jsonwebtoken")
+require("dotenv").config()
 
 let addTeacher=async (req,res,next)=>{
     try{
@@ -20,14 +22,20 @@ let addTeacher=async (req,res,next)=>{
 
 let loginTeacher=async (req,res,next)=>{
     try{
-        let {email}=req.body
+        let {email, password}=req.body
 
         let teacherAvailable=await Teacher.findOne({email})
-        if(teacherAvailable){
-            return res.status(201).json({error:false, message:"Login Successfull"})
+        if(!teacherAvailable){
+            return res.status(201).json({error:true, message:"Email Invalid"})
+        }
+        let hashedPassword=await teacherAvailable.comparePass(password)
+
+        if(hashedPassword){
+            let token=jwt.sign({Name:teacherAvailable.name, Email:teacherAvailable.email},process.env.JWT_KEY,{expiresIn:process.env.JWT_EXPIRESIN})
+            return res.status(201).json({error:false, message:"login successfull", token})
         }
         else{
-            return res.status(401).json({error:true, message:"Email Invalid"})
+            return res.status(401).json({error:true, message:"Invalid Password"})
         }
     }
     catch(err){
